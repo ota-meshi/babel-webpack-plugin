@@ -52,10 +52,12 @@ class BabelPlugin {
 								inputSourceMap = asset.map();
 								input = asset.source();
 							}
-							fileOptions.inputSourceMap = inputSourceMap;
+							// fileOptions.inputSourceMap = inputSourceMap;
 						} else {
 							input = asset.source();
 						}
+						fileOptions.sourceRoot = "";
+						fileOptions.sourceFileName = file;
 
 						const result = babel.transform(input, fileOptions);
 
