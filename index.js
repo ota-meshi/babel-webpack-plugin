@@ -4,7 +4,6 @@ const ModuleFilenameHelpers = require("webpack/lib/ModuleFilenameHelpers");
 const RequestShortener = require("webpack/lib/RequestShortener");
 const babel = require("babel-core");
 
-
 class BabelPlugin {
 	constructor(options) {
 		if(typeof options !== "object" || Array.isArray(options)) options = {};
