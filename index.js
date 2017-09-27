@@ -3,6 +3,9 @@ const OriginalSource = require("webpack-sources").OriginalSource;
 const ModuleFilenameHelpers = require("webpack/lib/ModuleFilenameHelpers");
 const RequestShortener = require("webpack/lib/RequestShortener");
 const babel = require("babel-core");
+const SourceMapGenerator = require("source-map").SourceMapGenerator;
+const SourceMapConsumer = require("source-map").SourceMapConsumer;
+
 
 class BabelPlugin {
 	constructor(options) {
@@ -52,10 +55,38 @@ class BabelPlugin {
 								inputSourceMap = asset.map();
 								input = asset.source();
 							}
-							fileOptions.inputSourceMap = inputSourceMap;
+							if (inputSourceMap) {
+								// shift line index by one
+								const inputMapConsumer = new SourceMapConsumer(inputSourceMap);
+								const generator = new SourceMapGenerator({
+									file: inputMapConsumer.file,
+									sourceRoot: inputMapConsumer.sourceRoot
+								});
+								inputMapConsumer.eachMapping((mapping) => {
+									generator.addMapping({
+										name: mapping.name,
+										source: mapping.source,
+										original: mapping.source == null ? null : {
+											line: mapping.originalLine,
+											column: mapping.originalColumn,
+										},
+										generated: {
+											line: mapping.generatedLine + 1,
+											column: mapping.generatedColumn,
+										}
+									});
+								});
+								inputSourceMap.mappings = generator.toJSON().mappings;
+							}
+							// fileOptions.inputSourceMap = inputSourceMap;
 						} else {
 							input = asset.source();
 						}
+						fileOptions.sourceRoot = "";
+						fileOptions.sourceFileName = file;
+						// wrapping top level 'this'
+						// see https://github.com/babel/babel/issues/843
+						input = `(function(){\n${input}\n}).call(typeof global !== "undefined" ? global : window);`;
 
 						const result = babel.transform(input, fileOptions);
 
